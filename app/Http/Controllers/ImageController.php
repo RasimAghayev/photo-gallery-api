@@ -21,16 +21,6 @@ class ImageController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \App\Http\Requests\StoreImageRequest  $request
@@ -39,6 +29,7 @@ class ImageController extends Controller
     public function store(StoreImageRequest $request)
     {
         //
+        return new ImageResource(Image::create($request->all()));
     }
 
     /**
@@ -47,21 +38,16 @@ class ImageController extends Controller
      * @param  \App\Models\Image  $image
      * @return \Illuminate\Http\Response
      */
-    public function show(Image $image)
+    public function show($id)
     {
-        //
+        $image=Image::find($id);
+        if($image) {
+            return new ImageResource($image);
+        }else{
+            return 'Image not found.';
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Image  $image
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Image $image)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -72,7 +58,7 @@ class ImageController extends Controller
      */
     public function update(UpdateImageRequest $request, Image $image)
     {
-        //
+        $image->update($request->all());
     }
 
     /**
@@ -83,6 +69,10 @@ class ImageController extends Controller
      */
     public function destroy(Image $image)
     {
-        //
+        return response()->json([
+            'id'=>$image->id,
+            'status'=>$image->delete(),
+            'message'=>'Success'
+        ]);
     }
 }
