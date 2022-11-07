@@ -16,6 +16,7 @@ class ImageController extends Controller
      */
     public function index()
     {
+        //Task 3
         return new ImageCollection(Image::orderBy('id', 'desc')->paginate(10));
     }
 
