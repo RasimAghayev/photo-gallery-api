@@ -28,7 +28,7 @@ class ImageController extends Controller
      */
     public function store(StoreImageRequest $request)
     {
-        //
+        dd($request->all());
         return new ImageResource(Image::create($request->all()));
     }
 
@@ -69,6 +69,7 @@ class ImageController extends Controller
      */
     public function destroy(Image $image)
     {
+        $imageFile=Image::exists($image->file);
         return response()->json([
             'id'=>$image->id,
             'status'=>$image->delete(),

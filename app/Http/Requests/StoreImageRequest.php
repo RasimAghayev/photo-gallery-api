@@ -13,7 +13,7 @@ class StoreImageRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,19 +24,19 @@ class StoreImageRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'=>'required|string|unique:images,name|min:3|max:50',
-            'description'=>'required|string|min:3|max:250',
-            'type'=>'required|in:1,2,3',
-            'file'=>'required|mimes:jpeg,jpg,png,gif|image|size:5120',
+            'imageName'=>'required|string|unique:images,name|min:3|max:50',
+            'imageDescription'=>'required|string|min:3|max:250',
+            'imageType'=>'required|in:1,2,3',
+            'imageFile'=>'required|mimes:jpeg,jpg,png,gif|image|size:5120',
         ];
     }
     protected function prepareForValidation()
     {
         $this->merge([
-            'imageName' => $this->name,
-            'imageDescription' => $this->description,
-            'imageType' => $this->type,
-            'imageFile' => $this->file
+            'name' => $this->imageName,
+            'description' => $this->imageDescription,
+            'type' => $this->imageType,
+            'file' => $this->imageFile
         ]);
     }
 }

@@ -17,18 +17,18 @@ class UpdateImageRequest extends FormRequest
         $method=$this->method();
         if($method=='PUT'){
             $data= [[
-                'name'=>'required|string|min:3|max:50',
-                'description'=>'required|string|min:3|max:250',
-                'type'=>'required|in:1,2,3',
-                'file'=>'required|image|mimes:jpeg,jpg,png,gif|size:5120',
+                'imageName'=>'required|string|min:3|max:50',
+                'imageDescription'=>'required|string|min:3|max:250',
+                'imageType'=>'required|in:1,2,3',
+                'imageFile'=>'required|image|mimes:jpeg,jpg,png,gif|size:5120',
             ]
             ];
         }else{
             $data= [[
-                'name'=>'sometimes|string|min:3|max:50',
-                'description'=>'sometimes|string|min:3|max:250',
-                'type'=>'sometimes|in:1,2,3',
-                'file'=>'sometimes|image|mimes:jpeg,jpg,png,gif|size:5120',
+                'imageName'=>'sometimes|string|min:3|max:50',
+                'imageDescription'=>'sometimes|string|min:3|max:250',
+                'imageType'=>'sometimes|in:1,2,3',
+                'imageFile'=>'sometimes|image|mimes:jpeg,jpg,png,gif|size:5120',
             ]
             ];
         }
@@ -37,10 +37,10 @@ class UpdateImageRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'imageName' => $this->name,
-            'imageDescription' => $this->description,
-            'imageType' => $this->type,
-            'imageFile' => $this->file
+            'name' => $this->imageName,
+            'description' => $this->imageDescription,
+            'type' => $this->imageType,
+            'file' => $this->imageFile
         ]);
     }
 }

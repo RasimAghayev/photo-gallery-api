@@ -14,7 +14,7 @@ class ImageFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition()
+    public function definition(): array
     {
         $type=$this->faker->randomElement(['1','2','3']);
         return [
