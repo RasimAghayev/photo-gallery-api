@@ -15,12 +15,12 @@ class ImageResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'name' => $this->imageName,
-            'description' => $this->imageDescription,
-            'type' => $this->imageType,
-            'file' => $this->imageFile,
-            'created_at' => $this->createdTimestump->format('d.m.Y H:i:s'),
-            'updated_at' => $this->updatedTimestump->format('d.m.Y H:i:s'),
+            'imageName' => $this->name,
+            'imageDescription' => $this->description,
+            'imageType' => $this->type,
+            'imageFile' => $this->file,
+            'createdTimestump' => $this->created_at->format('d.m.Y H:i:s'),
+            'updatedTimestump' => $this->updated_at->format('d.m.Y H:i:s'),
         ];
     }
 }
