@@ -1,66 +1,151 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AbyssTask
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 10 API + cron job project built as a developer recruitment task.
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This repository implements the Abyss recruitment task requirements:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. **Laravel project** — Laravel 10 boilerplate (note: task spec requested Laravel 9; project uses Laravel 10 per `composer.json`)
+2. **Image API** — REST API for saving, listing, and showing image records with pagination
+3. **Validation** — Input validation for name (string, max 50), description (string, max 250), file (image, max 5MB), type (enum: 1, 2, 3)
+4. **Image storage** — Images saved to private storage folder (not publicly accessible)
+5. **Pagination** — Listing endpoint returns 10 records per page
+6. **Cron job** — Scheduled command to delete records older than 30 days (hourly)
+7. **Seed** — Database seeders included
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Architecture
 
-## Learning Laravel
+### Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Component | Technology |
+|-----------|-----------|
+| Framework | Laravel 10 (`laravel/framework: ^10.0`) |
+| API Auth | Sanctum (`laravel/sanctum: ^3.0`) |
+| PHP | `^8.0.2` |
+| Database | MySQL |
+| Testing | PHPUnit 9.5 |
+| Code Style | Laravel Pint |
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Project Structure
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+AbyssTask/
+├── app/
+│   ├── Console/
+│   │   └── Kernel.php          # Cron schedule + command registration
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Controller.php   # Base controller
+│   │   │   └── ImageController.php  # REST API controller (index, store, show, update, destroy)
+│   │   ├── Requests/           # Form requests (StoreImageRequest, UpdateImageRequest)
+│   │   └── Resources/          # API Resources (ImageCollection, ImageResource)
+│   ├── Models/
+│   │   ├── Image.php           # Image model (fillable: name, description, type, file)
+│   │   └── User.php
+│   └── ...
+├── database/
+│   ├── migrations/
+│   │   ├── 2022_11_07_111254_create_galleries_table.php  # images table
+│   │   ├── 2014_10_12_000000_create_users_table.php
+│   │   ├── 2014_10_12_100000_create_password_resets_table.php
+│   │   └── 2019_08_19_000000_create_failed_jobs_table.php
+│   ├── seeders/                # Database seeders
+│   └── factories/
+├── routes/
+│   └── api.php                 # API routes (v1/image resource)
+├── composer.json
+├── package.json
+├── vite.config.js
+└── artisan
+```
 
-## Laravel Sponsors
+### API Endpoints
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+All endpoints are under `/api/v1/image` (RESTful resource):
 
-### Premium Partners
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/image` | List all images (paginated by 10) |
+| POST | `/api/v1/image` | Save a new image record |
+| GET | `/api/v1/image/{id}` | Show a single image record |
+| PUT | `/api/v1/image/{id}` | Update an image record |
+| DELETE | `/api/v1/image/{id}` | Delete an image record |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### Database Schema
 
-## Contributing
+`images` table:
+- `id` — bigint (primary key)
+- `name` — varchar(50), required
+- `description` — varchar(250), required
+- `type` — enum('1', '2', '3'), default '1'
+- `file` — varchar(250), image path (private storage)
+- `created_at` / `updated_at` — timestamps
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Running
 
-## Code of Conduct
+### Prerequisites
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- PHP 8.0.2+
+- Composer
+- MySQL
+- Node.js + npm (for Vite frontend, if needed)
 
-## Security Vulnerabilities
+### Setup
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Clone
+git clone https://github.com/RasimAghayev/AbyssTask.git
+cd AbyssTask
+
+# Install dependencies
+composer install
+npm install
+
+# Environment
+cp .env.example .env
+php artisan key:generate
+
+# Configure database in .env
+# DB_DATABASE=your_database
+# DB_USERNAME=your_user
+# DB_PASSWORD=your_password
+
+# Run migrations
+php artisan migrate
+
+# Start dev server
+php artisan serve
+```
+
+### Testing
+
+```bash
+php artisan test
+# or
+vendor/bin/phpunit
+```
+
+### Cron Job (Delete Old Records)
+
+The cron job is configured in `app/Console/Kernel.php` to delete records older than 30 days, scheduled to run hourly:
+
+```php
+// In app/Console/Kernel.php → schedule()
+$schedule->command('images:cleanup')
+    ->hourly()
+    ->appendOutputTo(storage_path('logs/cron.log'));
+```
+
+Register the cron job on your server:
+```bash
+* * * * * cd /path/to/AbyssTask && php artisan schedule:run >> /dev/null 2>&1
+```
+
+## Task Source
+
+This repository was built as a developer recruitment task for [Abyss](https://github.com/RasimAghayev/AbyssTask). The full task description is in [Task.md](Task.md).
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT

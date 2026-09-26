@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\ThirtyMinuteQuote::class,
+        Commands\DeleteOldImages::class,
     ];
     /**
      * Define the application's command schedule.
@@ -23,8 +23,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('quote:thirtyminute')
-            ->everyThirtyMinutes();
+        $schedule->command('images:delete-old')
+            ->hourly()
+            ->appendOutputTo(storage_path('logs/cron.log'));
     }
 
     /**

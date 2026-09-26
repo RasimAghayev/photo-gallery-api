@@ -29,8 +29,14 @@ class ImageController extends Controller
      */
     public function store(StoreImageRequest $request)
     {
-        dd($request->all());
-        return new ImageResource(Image::create($request->all()));
+        $validated = $request->validated();
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('images', 'private');
+            $validated['file'] = $path;
+        }
+
+        return new ImageResource(Image::create($validated));
     }
 
     /**
@@ -59,7 +65,8 @@ class ImageController extends Controller
      */
     public function update(UpdateImageRequest $request, Image $image)
     {
-        $image->update($request->all());
+        $image->update($request->validated());
+        return new ImageResource($image);
     }
 
     /**
