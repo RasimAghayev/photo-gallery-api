@@ -1,11 +1,10 @@
-* text=auto
+# The build context of the Docker images is taken from the working tree, so
+# the line endings have to be the same on every machine. Git stores the files
+# with LF and checks them out with LF; a Windows checkout that produced CRLF
+# would put a different file into the image than the one the tests ran
+# against, and the linter would report every file of the project.
+* text=auto eol=lf
 
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
-
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+# Batch files need the line endings of the shell that runs them.
+*.bat text eol=crlf
+*.cmd text eol=crlf

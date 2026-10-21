@@ -1,0 +1,91 @@
+name: "abysstask"
+
+# Every bind mount of the stack lives under var/ (R92): the local environment
+# file, the database state and the files of the gallery. The application
+# source is baked into the image, so no versioned directory is mounted into a
+# container. Named volumes are forbidden.
+#
+# Resource limits are required for every service (R60, R64, R102).
+x-resources-default: &resources-default
+  deploy:
+    resources:
+      limits:
+        cpus: "1.0"
+        memory: 512M
+        pids: 256
+      reservations:
+        cpus: "0.25"
+        memory: 128M
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: build/php/Dockerfile
+      target: runtime
+    container_name: abysstask_app
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - var/.env
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      # The credentials of the database are never given a default value: a
+      # default password is a password that everybody knows.
+      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE is required, copy .env.example to var/.env}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required, copy .env.example to var/.env}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required, copy .env.example to var/.env}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      # The files of the gallery live on the disk of the machine, so they
+      # survive a restart of the container.
+      - ./var/storage:/var/www/html/storage
+    <<: *resources-default
+    networks:
+      - abysstask
+
+  test:
+    build:
+      context: .
+      dockerfile: build/php/Dockerfile
+      target: test
+    profiles: ["test"]
+    # The suite runs against an in memory database, so it needs neither a
+    # database nor the network. It reads no environment file, so the values
+    # of the local machine cannot change the result.
+    <<: *resources-default
+    networks:
+      - abysstask
+
+  mysql:
+    build:
+      context: .
+      dockerfile: build/mysql/Dockerfile
+    container_name: abysstask_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?DB_DATABASE is required, copy .env.example to var/.env}
+      MYSQL_USER: ${DB_USERNAME:?DB_USERNAME is required, copy .env.example to var/.env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required, copy .env.example to var/.env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required, copy .env.example to var/.env}
+    volumes:
+      - ./var/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${DB_USERNAME:?DB_USERNAME is required} -p${DB_PASSWORD:?DB_PASSWORD is required}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    <<: *resources-default
+    networks:
+      - abysstask
+
+networks:
+  abysstask:
+    name: abysstask
