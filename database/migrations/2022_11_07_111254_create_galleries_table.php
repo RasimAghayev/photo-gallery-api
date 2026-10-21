@@ -15,10 +15,10 @@ return new class extends Migration
     {
         Schema::create('images', function (Blueprint $table) {
             $table->id();
-            $table->string('name',50);
-            $table->string('description',250);
-            $table->enum('type',['1','2','3'])->default('1');
-            $table->string('file',250);
+            $table->string('name', 50);
+            $table->string('description', 250);
+            $table->enum('type', ['1', '2', '3'])->default('1');
+            $table->string('file', 250);
             $table->timestamps();
         });
     }
