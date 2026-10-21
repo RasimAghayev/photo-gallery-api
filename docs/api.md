@@ -1,4 +1,4 @@
-# The API of AbyssTask
+# The API of photo-gallery-api
 
 Every endpoint, with its request, its response and the rules that hold for
 it. The base path of the API is `/api/v1`.

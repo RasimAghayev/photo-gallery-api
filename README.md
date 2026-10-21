@@ -1,4 +1,4 @@
-# AbyssTask
+# photo-gallery-api
 
 An image gallery API with a scheduled cleanup, built as a developer
 recruitment task. The brief is in [`Task.md`](Task.md).
@@ -142,7 +142,7 @@ that belong to them. It runs every hour, and the schedule is declared in
 be started on the server:
 
 ```shell
-* * * * * cd /path/to/AbyssTask && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /path/to/photo-gallery-api && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## Known limitations

@@ -1,4 +1,4 @@
-# The database image of the compose stack of AbyssTask.
+# The database image of the compose stack of photo-gallery-api.
 #
 # The service builds from this file instead of pointing at a registry image
 # (R91). The base image is pinned by digest.
