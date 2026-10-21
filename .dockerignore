@@ -1,0 +1,14 @@
+# The image of the application carries the source, so only the runtime state
+# of the stack and the local tooling are left out of the build context.
+.git
+.github
+var
+node_modules
+vendor
+*.log
+
+# The local environment file. It holds the values of the machine and must
+# never be baked into an image.
+.env
+.env.*
+!.env.example
