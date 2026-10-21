@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,9 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// The records that are older than 30 days are removed every hour, together
+// with the files of the private disk that belong to them.
+Schedule::command('images:delete-old')
+    ->hourly()
+    ->appendOutputTo(storage_path('logs/cron.log'));
