@@ -44,6 +44,24 @@ return [
             'throw' => false,
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | Private Disk
+        |----------------------------------------------------------------------
+        |
+        | The images of the gallery are not meant to be read by their address.
+        | They live on this disk, which has no address of its own, and a
+        | consumer gets a temporary address that carries a signature.
+        |
+        */
+
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
