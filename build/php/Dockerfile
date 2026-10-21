@@ -1,4 +1,4 @@
-# The application image of AbyssTask.
+# The application image of photo-gallery-api.
 #
 # The base images are pinned by digest: a floating tag would let the runtime
 # drift away from the version the lock file was built for. The application
