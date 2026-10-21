@@ -1,0 +1,53 @@
+name: CI
+
+# The whole quality gate runs inside the project's own Docker images, so the
+# runner needs a Docker daemon and nothing else. No PHP toolchain is
+# installed on the runner.
+on:
+  push:
+    branches: [master, test]
+  pull_request:
+    branches: [master, test]
+
+# The pipeline only reads the repository. It never publishes anything and never
+# writes to the GitHub API.
+permissions:
+  contents: read
+
+jobs:
+  quality-gates:
+    name: Docker quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Create the local environment file
+        # Every bind mount of the compose stack lives under var/ (R92). The
+        # values are the placeholders of .env.example.
+        run: |
+          mkdir -p var
+          cp .env.example var/.env
+
+      - name: Validate the compose file
+        run: docker compose --env-file var/.env config --quiet
+
+      - name: Build the test image
+        run: docker compose --env-file var/.env build test
+
+      - name: Run the test suite
+        run: docker compose --env-file var/.env --profile test run --rm test
+
+      - name: Run the linter
+        run: docker compose --env-file var/.env --profile test run --rm --entrypoint ./vendor/bin/pint test --test
+
+      - name: Audit the dependencies
+        run: docker compose --env-file var/.env --profile test run --rm --entrypoint composer test audit --no-interaction --abandoned=report
+
+      - name: Build the application image
+        run: docker compose --env-file var/.env build app
+
+      - name: Build the database image
+        run: docker compose --env-file var/.env build mysql
