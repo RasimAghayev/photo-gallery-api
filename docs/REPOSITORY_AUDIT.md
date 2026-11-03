@@ -12,13 +12,13 @@ Full-history secrets scan (`git log --all -p`, same method used for `be-chatty`)
 
 ## Branches
 
-Default branch is `master` (not `main` — flagged under CLAUDE.md Approval Gate #4, same as `be-chatty`). A `test` branch exists, matching the `main`/`test` convention CLAUDE.md recommends — but `git log origin/test..origin/master` shows `master` is currently 12 commits ahead of `test` with `test` contributing nothing back, meaning in practice bot PRs (Renovate/Dependabot) merge straight into `master`, not through `test` as the README's own documented flow (`feature/* -> test -> master`) describes. This is a process-drift observation, not a defect — low risk for a solo-maintained repo, but worth knowing if branch protection is ever added.
+Default branch was `master` (not `main` — flagged under CLAUDE.md Approval Gate #4, same as `be-chatty`); **renamed to `main` and verified 2026-11-03** after explicit approval, via the GitHub API's branch-rename endpoint, which updated the default branch pointer and left a redirect from the old name automatically. `.github/workflows/ci.yml` and `README.md`'s branch references were updated to match. A `test` branch exists, matching the `main`/`test` convention CLAUDE.md recommends — but at the time of the rename, `master` was 12 commits ahead of `test` with `test` contributing nothing back, meaning in practice bot PRs (Renovate/Dependabot) merge straight into the default branch, not through `test` as the README's own documented flow (`feature/* -> test -> main`) describes. This is a process-drift observation, not a defect — low risk for a solo-maintained repo, but worth knowing if branch protection is ever added.
 
 9 open bot PRs (all Renovate), 0 open issues, no stale/abandoned feature branches beyond the bot branches matching the open PRs.
 
 ## CI/CD
 
-`.github/workflows/ci.yml` — a genuinely well-built pipeline: Docker-only (the runner has no PHP toolchain installed; every gate runs inside the project's own images), `actions/checkout` pinned to a commit SHA (not a floating tag), `permissions: contents: read` (the workflow never writes anything). Triggers on push/PR to `master` and `test`.
+`.github/workflows/ci.yml` — a genuinely well-built pipeline: Docker-only (the runner has no PHP toolchain installed; every gate runs inside the project's own images), `actions/checkout` pinned to a commit SHA (not a floating tag), `permissions: contents: read` (the workflow never writes anything). Triggers on push/PR to `main` and `test`.
 
 **Every gate was independently re-run locally during this audit** (not just read from the YAML) to confirm the pipeline is actually green today, not just well-written:
 
