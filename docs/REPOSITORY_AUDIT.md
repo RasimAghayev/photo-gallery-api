@@ -32,6 +32,12 @@ Default branch was `master` (not `main` — flagged under CLAUDE.md Approval Gat
 | App image build | `docker compose --env-file var/.env build app` | ✅ builds clean |
 | DB image build | `docker compose --env-file var/.env build mysql` | ✅ builds clean |
 
+**Added during Phase 4 (2026-11-03)** — a static-analysis gate (Larastan), re-verified alongside the above after every Phase 4 change:
+
+| Gate | Command | Result |
+|---|---|---|
+| Static analysis | `vendor/bin/phpstan analyse --memory-limit=512M` | ✅ **0 errors** (9 pre-existing findings baselined — see Dependencies/Phase 4 note below) |
+
 ## Docker / containerization
 
 Both the `app` and `mysql` Dockerfiles are already following best practice: multi-stage builds, base images pinned by digest (not just tag — a `mysql:8.4@sha256:...` style pin), a non-root runtime user (`www-data`) for the application process, a `HEALTHCHECK` on the app image, a dedicated `test` build stage that never ships to the runtime image, resource limits (`cpus`/`memory`/`pids`) declared on every compose service, and required (non-defaulted) database credentials enforced via Compose's `${VAR:?error message}` syntax — a stronger posture than `be-chatty`'s original hardcoded-default pattern (now fixed there too). No gaps found worth a P0/P1 finding.
@@ -61,5 +67,7 @@ Original baseline (before the approved Phase 2.6 hygiene pass):
 **After the approved Phase 2.6 hygiene pass:**
 - `symfony/mime` bumped to v7.4.22 via a targeted `composer update symfony/mime` (lockfile-only, no `composer.json` range change). `composer audit` now reports **0 vulnerabilities**.
 - The 4 safe PRs merged individually (never batch-merged): `#40`, `#39`, `#38`, `#34`. All 7 CI gates independently re-run locally afterward against the fully-merged state and verified green: compose config, test-image build, **24/24 tests pass**, **68-file lint clean**, **0 audit findings**, app-image build, db-image build.
-- **5 open PRs remain** (`#37`, `#28`, `#32`, `#20`, `#41`) — all major-version/engine-upgrade bumps, deliberately left untouched per the approved plan, each needing its own separate review (CLAUDE.md Approval Gate #5 territory).
+- **5 open PRs remain** (`#37`, `#28`, `#32`, `#20`, `#41`) — all major-version/engine-upgrade bumps, deliberately left untouched per the approved plan, each needing its own separate review (CLAUDE.md Approval Gate #5 territory). Re-checked CI during Phase 4: `#41` (MySQL 26.x) and `#32` (PHP 8.5) now show green CI; `#37` (Laravel v13), `#28` (guzzle v8), `#20` (phpunit v13) still fail. CI-green doesn't clear Gate #5 by itself (the test suite runs against in-memory SQLite, so it says nothing about real MySQL 26 compatibility) — all 5 remain open, unmerged, for separate review.
 - 0 open human-authored issues.
+
+**Phase 4 addition:** `larastan/larastan` added as a dev dependency (composer.json/.lock only — a transitive `guzzlehttp/guzzle` patch bump, 7.16.0→7.16.1, came along in-range). `composer audit` still reports 0 vulnerabilities after the addition.
