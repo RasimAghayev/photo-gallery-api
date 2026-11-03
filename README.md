@@ -20,23 +20,27 @@ development, the tests and the production build.
 - **A scheduled command removes the records that are older than 30 days**,
   together with the files that belong to them.
 
-The contract of every endpoint is in [`docs/api.md`](docs/api.md).
+The contract of every endpoint is in [`docs/api.md`](docs/api.md), and in
+machine-readable form in [`openapi.yaml`](openapi.yaml).
 
 ## Running it
 
 ```shell
 mkdir -p var
 cp .env.example var/.env
-docker compose --env-file var/.env build
-docker compose --env-file var/.env up -d
+make up
 ```
 
 Then:
 
 ```shell
-docker compose --env-file var/.env exec app php artisan migrate
-docker compose --env-file var/.env exec app php artisan api:token tester@example.com
+make migrate
+make token EMAIL=tester@example.com
 ```
+
+`make up`/`make down`/`make test`/`make lint`/`make audit`/`make analyse` wrap
+the `docker compose --env-file var/.env ...` commands below — use whichever
+you prefer, they run the same thing.
 
 The command prints a token. Send it in the header
 `Authorization: Bearer <token>`.
@@ -67,6 +71,8 @@ a note about it into the log.
 | PUT | `/api/v1/image/{id}` | token | Changes a record. |
 | DELETE | `/api/v1/image/{id}` | token | Removes a record and its file. |
 | GET | `/api/v1/image/{id}/file` | signature | The file itself, through a signed address. |
+| GET | `/health/live` | – | Liveness probe: the process is up. |
+| GET | `/health/ready` | – | Readiness probe: the process is up and the database answers. |
 
 The fields of a request carry the names of the brief: `imageName`,
 `imageDescription`, `imageType` and `imageFile`.
@@ -77,10 +83,14 @@ Both gates run inside the project's own Docker images. Nothing has to be
 installed on the machine.
 
 ```shell
-docker compose --env-file var/.env --profile test run --rm test                                  # phpunit
-docker compose --env-file var/.env --profile test run --rm --entrypoint ./vendor/bin/pint test --test   # the linter
-docker compose --env-file var/.env --profile test run --rm --entrypoint composer test audit --no-interaction --abandoned=report
+make test       # phpunit
+make lint        # Laravel Pint, check mode
+make audit       # composer audit
+make analyse     # Larastan (PHPStan for Laravel)
 ```
+
+Each wraps a `docker compose --env-file var/.env --profile test run --rm ...`
+command — see the `Makefile` for the exact invocation.
 
 The suite runs against an in memory SQLite database, so it needs neither a
 database nor a network. It covers the listing, the two writes, the validation
@@ -89,6 +99,11 @@ scheduled command.
 
 The linter is Laravel Pint. The rules are the ones of Laravel, and the
 directories of the runtime state are excluded in `pint.json`.
+
+Larastan analyses `app/` at level 5. `phpstan-baseline.neon` holds the
+pre-existing findings this pass didn't touch — the stubbed, unregistered
+`ImagePolicy` and a stock Laravel 12 model PHPDoc warning — so the gate stays
+meaningful for new code without silently masking either.
 
 ## CI/CD
 
@@ -102,6 +117,7 @@ request:
 | Test suite | `docker compose --env-file var/.env --profile test run --rm test` | ✅ |
 | Linter | `pint --test` | ✅ |
 | Dependency audit | `composer audit` | ✅ |
+| Static analysis | `phpstan analyse` (Larastan) | ✅ |
 | Build the application image | `docker compose --env-file var/.env build app` | ✅ |
 | Build the database image | `docker compose --env-file var/.env build mysql` | ✅ |
 
@@ -126,6 +142,7 @@ integration state). A change is delivered as a pull request from a
 | Web server | Apache with the rewrite module, the workers run as `www-data` on port 8080 |
 | Tests | PHPUnit 11, Laravel Pint as the linter |
 | Dependency audit | `composer audit` |
+| Static analysis | Larastan (PHPStan for Laravel), level 5 |
 
 The base images are pinned by digest, so a rebuild of the project uses the
 same runtime as the last one.
