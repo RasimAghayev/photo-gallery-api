@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Image;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,6 +14,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * record. The path of the file is not part of it, and it is not part of this
  * answer either: the files live on a private disk and their path says
  * nothing to a consumer.
+ *
+ * @mixin Image
  */
 class ImageResource extends JsonResource
 {
