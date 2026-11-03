@@ -1,5 +1,7 @@
 # photo-gallery-api
 
+![Views](https://hits.sh/github.com/RasimAghayev/photo-gallery-api.svg?label=views&color=0e75b6)
+
 An image gallery API with a scheduled cleanup, built as a developer
 recruitment task. The brief is in [`Task.md`](Task.md).
 
