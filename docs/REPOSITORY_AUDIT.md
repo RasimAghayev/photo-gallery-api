@@ -12,13 +12,13 @@ Full-history secrets scan (`git log --all -p`, same method used for `be-chatty`)
 
 ## Branches
 
-Default branch is `master` (not `main` — flagged under CLAUDE.md Approval Gate #4, same as `be-chatty`). A `test` branch exists, matching the `main`/`test` convention CLAUDE.md recommends — but `git log origin/test..origin/master` shows `master` is currently 12 commits ahead of `test` with `test` contributing nothing back, meaning in practice bot PRs (Renovate/Dependabot) merge straight into `master`, not through `test` as the README's own documented flow (`feature/* -> test -> master`) describes. This is a process-drift observation, not a defect — low risk for a solo-maintained repo, but worth knowing if branch protection is ever added.
+Default branch was `master` (not `main` — flagged under CLAUDE.md Approval Gate #4, same as `be-chatty`); **renamed to `main` and verified 2026-11-03** after explicit approval, via the GitHub API's branch-rename endpoint, which updated the default branch pointer and left a redirect from the old name automatically. `.github/workflows/ci.yml` and `README.md`'s branch references were updated to match. A `test` branch exists, matching the `main`/`test` convention CLAUDE.md recommends — but at the time of the rename, `master` was 12 commits ahead of `test` with `test` contributing nothing back, meaning in practice bot PRs (Renovate/Dependabot) merge straight into the default branch, not through `test` as the README's own documented flow (`feature/* -> test -> main`) describes. This is a process-drift observation, not a defect — low risk for a solo-maintained repo, but worth knowing if branch protection is ever added.
 
 9 open bot PRs (all Renovate), 0 open issues, no stale/abandoned feature branches beyond the bot branches matching the open PRs.
 
 ## CI/CD
 
-`.github/workflows/ci.yml` — a genuinely well-built pipeline: Docker-only (the runner has no PHP toolchain installed; every gate runs inside the project's own images), `actions/checkout` pinned to a commit SHA (not a floating tag), `permissions: contents: read` (the workflow never writes anything). Triggers on push/PR to `master` and `test`.
+`.github/workflows/ci.yml` — a genuinely well-built pipeline: Docker-only (the runner has no PHP toolchain installed; every gate runs inside the project's own images), `actions/checkout` pinned to a commit SHA (not a floating tag), `permissions: contents: read` (the workflow never writes anything). Triggers on push/PR to `main` and `test`.
 
 **Every gate was independently re-run locally during this audit** (not just read from the YAML) to confirm the pipeline is actually green today, not just well-written:
 
@@ -31,6 +31,12 @@ Default branch is `master` (not `main` — flagged under CLAUDE.md Approval Gate
 | Dependency audit | `composer audit --abandoned=report` | ⚠️ **1 medium-severity finding** (see Dependencies below) |
 | App image build | `docker compose --env-file var/.env build app` | ✅ builds clean |
 | DB image build | `docker compose --env-file var/.env build mysql` | ✅ builds clean |
+
+**Added during Phase 4 (2026-11-03)** — a static-analysis gate (Larastan), re-verified alongside the above after every Phase 4 change:
+
+| Gate | Command | Result |
+|---|---|---|
+| Static analysis | `vendor/bin/phpstan analyse --memory-limit=512M` | ✅ **0 errors** (9 pre-existing findings baselined — see Dependencies/Phase 4 note below) |
 
 ## Docker / containerization
 
@@ -52,8 +58,16 @@ Both the `app` and `mysql` Dockerfiles are already following best practice: mult
 
 ## Dependencies
 
-- `composer audit --abandoned=report` (run locally, matching CI exactly): **1 medium-severity finding** — `symfony/mime` v7.4.19 (a transitive dependency pulled in by `laravel/framework`, not directly required) is vulnerable to **CVE-2026-45070** (email header injection via non-token characters in MIME parameter names), fixed in 7.4.22+. The existing `composer.json` doesn't pin `symfony/mime` directly, so this should resolve via a normal `composer update symfony/mime` within already-declared constraints — no major-version bump needed.
+Original baseline (before the approved Phase 2.6 hygiene pass):
+- `composer audit --abandoned=report`: **1 medium-severity finding** — `symfony/mime` v7.4.19 (a transitive dependency pulled in by `laravel/framework`, not directly required) vulnerable to **CVE-2026-45070** (email header injection via non-token characters in MIME parameter names), fixed in 7.4.22+.
 - **9 open Renovate PRs**, split by actual risk (checked each PR's touched files, not just its title, the same method used to catch `be-chatty`'s `@types/*` mismatches):
   - **4 safe, lockfile/digest-only, no `composer.json`/major-tag change:** `#40` (guzzle 7.16.1, in-range patch), `#39` (`mysql:8.4` digest bump), `#38` (`composer:2` digest bump), `#34` (`php:8.4-apache` digest bump).
-  - **5 real version-range or major-tag changes, each touching `composer.json` or a Dockerfile's primary version tag — flagged for separate review, not blindly merged in this pass:** `#37` (`laravel/framework` v12→v13, a framework major), `#28` (`guzzlehttp/guzzle` v7→v8, a major), `#32` (PHP Docker tag 8.4→8.5, a new PHP minor release needing a compatibility check), `#20` (PHPUnit v11→v13, dev-only but still a 2-major jump), `#41` (MySQL Docker tag 8.4→26.10 — Oracle switched MySQL's own Docker tagging scheme to a calendar-based one; this is a real database engine upgrade, not a cosmetic tag bump, and needs its own evaluation of migration/compatibility risk before merging).
+  - **5 real version-range or major-tag changes, each touching `composer.json` or a Dockerfile's primary version tag — flagged for separate review, not blindly merged:** `#37` (`laravel/framework` v12→v13, a framework major), `#28` (`guzzlehttp/guzzle` v7→v8, a major), `#32` (PHP Docker tag 8.4→8.5, a new PHP minor release needing a compatibility check), `#20` (PHPUnit v11→v13, dev-only but still a 2-major jump), `#41` (MySQL Docker tag 8.4→26.10 — Oracle switched MySQL's own Docker tagging scheme to a calendar-based one; this is a real database engine upgrade, not a cosmetic tag bump, and needs its own evaluation of migration/compatibility risk before merging).
+
+**After the approved Phase 2.6 hygiene pass:**
+- `symfony/mime` bumped to v7.4.22 via a targeted `composer update symfony/mime` (lockfile-only, no `composer.json` range change). `composer audit` now reports **0 vulnerabilities**.
+- The 4 safe PRs merged individually (never batch-merged): `#40`, `#39`, `#38`, `#34`. All 7 CI gates independently re-run locally afterward against the fully-merged state and verified green: compose config, test-image build, **24/24 tests pass**, **68-file lint clean**, **0 audit findings**, app-image build, db-image build.
+- **5 open PRs remain** (`#37`, `#28`, `#32`, `#20`, `#41`) — all major-version/engine-upgrade bumps, deliberately left untouched per the approved plan, each needing its own separate review (CLAUDE.md Approval Gate #5 territory). Re-checked CI during Phase 4: `#41` (MySQL 26.x) and `#32` (PHP 8.5) now show green CI; `#37` (Laravel v13), `#28` (guzzle v8), `#20` (phpunit v13) still fail. CI-green doesn't clear Gate #5 by itself (the test suite runs against in-memory SQLite, so it says nothing about real MySQL 26 compatibility) — all 5 remain open, unmerged, for separate review.
 - 0 open human-authored issues.
+
+**Phase 4 addition:** `larastan/larastan` added as a dev dependency (composer.json/.lock only — a transitive `guzzlehttp/guzzle` patch bump, 7.16.0→7.16.1, came along in-range). `composer audit` still reports 0 vulnerabilities after the addition.
