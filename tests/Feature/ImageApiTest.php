@@ -205,6 +205,48 @@ class ImageApiTest extends TestCase
             ->assertJsonPath('message', 'Image not found.');
     }
 
+    public function test_the_update_without_a_token_is_refused(): void
+    {
+        $image = Image::factory()->create(['name' => 'Old name']);
+
+        $this->withHeaders($this->headers())
+            ->put(self::ENDPOINT.'/'.$image->id, [
+                'imageName' => 'New name',
+                'imageDescription' => 'A new description.',
+                'imageType' => 3,
+            ])
+            ->assertUnauthorized();
+
+        $this->assertDatabaseHas('images', ['id' => $image->id, 'name' => 'Old name']);
+    }
+
+    public function test_an_update_with_an_invalid_type_is_refused(): void
+    {
+        $image = Image::factory()->create();
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->withHeaders($this->headers())
+            ->put(self::ENDPOINT.'/'.$image->id, [
+                'imageName' => 'A photo of a cat',
+                'imageDescription' => 'A cat that sits on a table.',
+                'imageType' => 4,
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_updating_an_image_that_does_not_exist_answers_not_found(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->withHeaders($this->headers())
+            ->put(self::ENDPOINT.'/999', [
+                'imageName' => 'A photo of a cat',
+                'imageDescription' => 'A cat that sits on a table.',
+                'imageType' => 1,
+            ])
+            ->assertStatus(404);
+    }
+
     public function test_an_image_is_updated(): void
     {
         $image = Image::factory()->create(['name' => 'Old name']);
@@ -260,5 +302,21 @@ class ImageApiTest extends TestCase
 
         // The file of the row that is gone has to go as well.
         Storage::disk('private')->assertMissing($path);
+    }
+
+    public function test_the_deletion_without_a_token_is_refused(): void
+    {
+        $image = Image::factory()->create();
+
+        $this->deleteJson(self::ENDPOINT.'/'.$image->id)->assertUnauthorized();
+
+        $this->assertDatabaseHas('images', ['id' => $image->id]);
+    }
+
+    public function test_deleting_an_image_that_does_not_exist_answers_not_found(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->deleteJson(self::ENDPOINT.'/999')->assertStatus(404);
     }
 }
