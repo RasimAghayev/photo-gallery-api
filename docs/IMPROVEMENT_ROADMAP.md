@@ -13,7 +13,7 @@ Written 2026-11-03 as the required Phase 2 step 6 deliverable ("produce a plan f
    - Merge the 4 safe ones directly: `#40` (guzzle patch, in-range), `#39`/`#38`/`#34` (Docker digest-only bumps, no semantic version change at all).
    - **Do not merge the 5 major/minor-range bumps in this pass**: `#37` (laravel/framework v12→v13), `#28` (guzzle v7→v8), `#32` (PHP Docker tag 8.4→8.5), `#20` (phpunit v11→v13), `#41` (MySQL Docker tag 8.4→26.10). Each is a real compatibility-risk upgrade and falls under CLAUDE.md Approval Gate #5 ("a major version upgrade that breaks backward API compatibility") — they'll be left open, documented in `TECHNICAL_DEBT.md`, for your separate review/approval rather than decided here.
 3. **Leave the 3 P3 cleanup items undone, as documented debt, not silently fixed or silently ignored**: the stubbed/unregistered `ImagePolicy`, the unused frontend scaffolding, and the misnamed migration file. None carry security or correctness risk; all three are listed in `TECHNICAL_DEBT.md` for your prioritization, matching CLAUDE.md's instruction not to over-engineer or refactor beyond what's asked.
-4. **Raise the default-branch rename (`master` -> `main`) as a separate question once the above is done** — same Gate #4 pattern as `be-chatty`, not decided inside this plan.
+4. **Raise the default-branch rename (`master` -> `main`) as a separate question once the above is done** — same Gate #4 pattern as `be-chatty`, not decided inside this plan. *(Completed 2026-11-03 — approved and executed; see `TECHNICAL_DEBT.md` #3.)*
 
 ## What this plan explicitly does NOT do
 
