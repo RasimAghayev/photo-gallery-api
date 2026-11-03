@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Image;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\URL;
  * temporary address of the image. The address carries a signature and stops
  * working after five minutes, so the file of the private disk never becomes
  * reachable without the key of the application.
+ *
+ * @mixin Image
  */
 class ImageDetailResource extends JsonResource
 {
