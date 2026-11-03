@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\HealthController;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -29,6 +30,12 @@ class RouteServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         $this->routes(function () {
+            // Outside the api/web groups on purpose: a K8s probe needs a
+            // fast, dependency-free path, not session/CSRF/rate-limit
+            // middleware meant for the rest of the application.
+            Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
+            Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
+
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
