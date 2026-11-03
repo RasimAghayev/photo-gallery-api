@@ -110,9 +110,9 @@ installed on it. The workflow reads the repository only, never prints a
 secret and never publishes anything, and `actions/checkout` is pinned to a
 commit hash so the tag cannot move under the pipeline.
 
-Two permanent branches exist: `master` (the released state) and `test` (the
+Two permanent branches exist: `main` (the released state) and `test` (the
 integration state). A change is delivered as a pull request from a
-`feature/*` branch into `test`, and from `test` into `master`.
+`feature/*` branch into `test`, and from `test` into `main`.
 
 ## The stack
 
