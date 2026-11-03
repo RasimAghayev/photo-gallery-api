@@ -46,6 +46,9 @@ jobs:
       - name: Audit the dependencies
         run: docker compose --env-file var/.env --profile test run --rm --entrypoint composer test audit --no-interaction --abandoned=report
 
+      - name: Run static analysis
+        run: docker compose --env-file var/.env --profile test run --rm --entrypoint ./vendor/bin/phpstan test analyse --memory-limit=512M
+
       - name: Build the application image
         run: docker compose --env-file var/.env build app
 
