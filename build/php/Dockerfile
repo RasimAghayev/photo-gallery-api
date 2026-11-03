@@ -5,7 +5,7 @@
 # source is copied into the image, so the container needs no bind mount of the
 # repository. Every bind mount of the compose stack lives under var/ (R92).
 
-FROM php:8.4-apache@sha256:aa8e130840d41caad97fb671cea5f7e9cc55449ea34fc6b3f0147a2da51c612a AS base
+FROM php:8.4-apache@sha256:4af38a0245996e700e20ec211b9f1c44fb789ad8cc7d24c7ea81ff382b641052 AS base
 
 # The application talks to the database with pdo_mysql. The extension gd is
 # needed by the tests, which build the image of a test file.
@@ -23,7 +23,7 @@ RUN a2enmod rewrite
 
 # The composer of the matching version, so the lock file is installed the way
 # it was resolved.
-COPY --from=composer:2@sha256:af98f42dfff7c68ba8d53c2164fd9fde1087b7d449514baa38c418b1f6bc4bac /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2@sha256:5190d9b445add2fa26090108273cb1ef1e1af98175201c737b85b3c4f90fbf7c /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
