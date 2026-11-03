@@ -1,0 +1,19 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    # Baselines the 9 pre-existing findings this Phase 4 pass deliberately
+    # does not touch: the stubbed, unregistered ImagePolicy (TECHNICAL_DEBT.md
+    # #4 — a separate, already-deferred decision) and Laravel's own generated
+    # User model PHPDoc covariance warning (present in a fresh Laravel 12
+    # install, not an app bug). Regenerate with --generate-baseline only when
+    # one of those two is intentionally addressed.
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app
+
+    # Pragmatic starting level for a Phase 4 pass — not level 9. Raising it
+    # further is a separate decision once the current baseline is clean.
+    level: 5
+
+    tmpDir: storage/phpstan
