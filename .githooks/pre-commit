@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Installed via: git config core.hooksPath .githooks
+# See scripts/secret-scan.sh for what this actually checks and why.
+set -euo pipefail
+repo_root="$(git rev-parse --show-toplevel)"
+exec "$repo_root/scripts/secret-scan.sh"
