@@ -132,6 +132,23 @@ Two permanent branches exist: `main` (the released state) and `test` (the
 integration state). A change is delivered as a pull request from a
 `feature/*` branch into `test`, and from `test` into `main`.
 
+## Security notes
+
+A pre-commit hook scans every staged change for secrets before it can be
+committed, using [gitleaks](https://github.com/gitleaks/gitleaks) (a local
+binary if one is on `PATH`, otherwise a disposable `zricethezav/gitleaks`
+Docker container). It is opt-in — enable it once per clone/worktree with:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+See `scripts/secret-scan.sh` for what it checks and why it snapshots staged
+blobs into a scratch directory instead of scanning the working tree or
+mounting `.git` directly (the latter breaks under a `git worktree` checkout).
+This local hook is a convenience, not the only line of defense: GitGuardian
+runs as a required check on every pull request regardless.
+
 ## The stack
 
 | Part | Choice |
