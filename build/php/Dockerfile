@@ -5,7 +5,7 @@
 # source is copied into the image, so the container needs no bind mount of the
 # repository. Every bind mount of the compose stack lives under var/ (R92).
 
-FROM php:8.5-apache@sha256:4cc63b3d4e05c40da73e7af5d39364ca2678ac07208919497bda3bbab975be95 AS base
+FROM php:8.5-apache@sha256:304eac8c3e14c194d05e1d67e756b641051d31d6848dd74db47dfae95f3142b8 AS base
 
 # The application talks to the database with pdo_mysql. The extension gd is
 # needed by the tests, which build the image of a test file.
