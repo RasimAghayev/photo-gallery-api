@@ -90,3 +90,88 @@ builds stayed green throughout, and were re-verified fresh after the
 - **`#43`** (Renovate, larastan v3.14.0) — clean, mergeable, CI green, matched live-latest exactly; merged directly (merge commit `ca2e141`), branch deleted.
 - **`#28`** (Renovate, guzzle v7→v8) — closed as superseded; its branch had a stale, conflicting merge base (predates the account-wide AI-attribution history rewrite), so step 3 above redid the identical bump fresh on top of current `main` instead of rebasing the bot's branch.
 - **`#45`** (Phase 4 `git-steward`, gitleaks pre-commit hook, `phase-4/git-hygiene`) — **not merged by this phase (R1: one writer per repo, different phase owns this PR)**. Its CI was failing solely because of the `composer audit` finding this phase's step 1 fixes. Once this phase's own PR lands on `main`, PR `#45` needs a rebase/merge-from-main (no code conflict expected — it only touches `.pre-commit-config.yaml`/`.git/hooks` tooling, not `composer.*`) and its CI should then go green; reported to the Orchestrator for a separate merge decision, not done here.
+
+## 2026-11-07 — Phase 7 (`cleaner`) dead-code sweep
+
+Run from `projects/worktrees/photo-gallery-api` (branch `phase-7/dead-code-cleanup`,
+based on `main`@`05c69a0`, Phase 4's PR #45 merge), `COMPOSE_PROJECT_NAME=photo-gallery-api-p7`,
+`APP_PORT=20060`.
+
+### Baseline (before any Phase 7 change)
+
+Full gate replica re-run against unmodified `main`@`05c69a0`: config validate,
+test-image build, test suite, Pint, Larastan, `composer audit` — all green,
+matching the Phase 6 post-upgrade state above. One finding emerged during the
+**live smoke test** (not part of the repo's own CI signature, but run here per
+this phase's "verify in Docker, don't trust a host run" discipline): every
+route returned a broken response. Root-caused via `storage/logs/laravel.log`
+to the pre-existing `PDO::MYSQL_ATTR_SSL_CA` deprecation (already tracked as
+`docs/TECHNICAL_DEBT.md` #10) — PHP 8.5 echoes the deprecation notice to raw
+output before Laravel sends headers, so every later `header()` call (including
+the exception handler's own 500-response attempt) fails with "headers already
+sent". This is why PHPUnit's 33/33 stayed green the whole time: the CLI test
+runner doesn't go through the same header-send path a real HTTP response does.
+
+### Tooling sweep (no code change; see `phpstan-baseline.neon`/`phpstan.neon`
+diffs and the handoff's skill proposal for the full methodology)
+
+- Larastan/PHPStan level 5 (already in CI): clean.
+- Psalm 6 (`vimeo/psalm:^6`, ad hoc in a disposable container): broad
+  `--find-unused-code=always` proved unreliable for this stack — it flagged
+  the live, definitely-used `ImageController` and every ServiceProvider as
+  unused (no visibility into `bootstrap/providers.php` /
+  `bootstrap/app.php`'s `withMiddleware()` closures / route-closure
+  resolution). Switched to targeted `--find-references-to=<FQCN>` per
+  candidate instead — reliable since it's a syntactic reference search, not a
+  usage heuristic. Confirmed zero references to `App\Policies\ImagePolicy`
+  and `GuzzleHttp\Client`.
+- `composer-unused/composer-unused-plugin`: installed but failed at runtime
+  (`Class "__ComposerUnused__\Symfony\Component\DependencyInjection\ContainerBuilder" not found`)
+  — a confirmed incompatibility with this stack's PHP 8.5/Symfony 8.x
+  versions. Abandoned; not a usable signal on this stack today.
+- Manual grep across `app/`, `routes/`, `config/`, `tests/`, `resources/`,
+  `build/`, `.github/workflows/` for dynamic dispatch, route registration,
+  `@vite()`, and namespace usage, corroborating every deletion below.
+
+### Changes made (6 commits on `phase-7/dead-code-cleanup`)
+
+| Commit | Change | Why |
+|---|---|---|
+| `13c6696` `fix(config)` | `config/database.php`: guard `PDO::MYSQL_ATTR_SSL_CA` with `class_exists(\Pdo\Mysql::class)` | Fixes the headers-already-sent cascade found during the baseline smoke test; `docs/TECHNICAL_DEBT.md` #10 |
+| `b25cd25` `refactor(auth)` | Renamed `VerifyCsrfToken` → `PreventRequestForgery` (class + `config/sanctum.php` key) | Laravel 13's own deprecated-alias replacement; `docs/TECHNICAL_DEBT.md` #11 |
+| `9254c7e` `refactor` | Deleted `app/Policies/ImagePolicy.php`; trimmed its 7 `phpstan-baseline.neon` entries | Fully stubbed, never registered; `docs/TECHNICAL_DEBT.md` #4 |
+| `fa9c035` `refactor` | Removed `guzzlehttp/guzzle` from `composer.json` `require` | Zero app-code usage; stays installed transitively via `laravel/framework` |
+| `24442e3` `refactor` | Removed `laravel/sail` from `composer.json` `require-dev` | Zero usage anywhere; this repo's real dev workflow is the custom Dockerfile/compose stack |
+| `30aa47a` `refactor` | Deleted `resources/js/`, `resources/css/`, `vite.config.js`, `package.json`; trimmed matching `.gitignore` lines; corrected `docs/TECHNICAL_DEBT.md` #5 and `docs/REPOSITORY_AUDIT.md` | Unused Vite/npm build scaffolding — **but `resources/views/welcome.blade.php` and its `/` route were kept**, since both docs incorrectly claimed nothing serves it; verified live that `RouteServiceProvider` registers `routes/web.php` under the `web` group (exempt from the `api`-only `ForceJsonResponse` middleware) and `GET /` returns 200 with real HTML |
+
+`app/Policies/ImagePolicy.php` was evaluated against the `php-query-builder`
+Phase 7 precedent's Gate 5 guardrail (any public/protected symbol with zero
+call sites on a published library must go to Gate 5, not be deleted on
+judgment) and found **not applicable**: `composer.json` declares
+`"type": "project"` (not `"library"`, and the package name
+`rasimaghayev/abysstask` is not published as a reusable dependency) — this is
+an application, not a library with external consumers. No Gate 5 needed for
+any deletion in this phase.
+
+### Full gate re-run after all 6 commits
+
+| Gate (CI step) | Result | Exit |
+|---|---|---|
+| Config validate | OK | 0 |
+| Build test image | Built | 0 |
+| Run test suite | PHPUnit 13.4.6, PHP 8.5.12 — **33/33 tests, 77 assertions, 0 deprecations** (down from 1 — the PDO fix above) | 0 |
+| Lint (Pint) | PASS, 69 files (down from 70 — the two deleted Policy/Middleware-adjacent files net out) | 0 |
+| Static analysis (Larastan) | OK, 0 errors | 0 |
+| **Audit** | No security vulnerability advisories found | 0 |
+| Build app image | Built | 0 |
+| Build db image | Built | 0 |
+| Live smoke test | `GET /` → 200 with full HTML (welcome page intact after `resources/css`/`resources/js` removal, no longer followed by the headers-already-sent failure on other routes); `GET /health/live` → 200 | — |
+
+**Conclusion: every gate green, test/lint/analyse signature unchanged in
+shape (33/33, 69 files, 0 errors) except the deprecation count, which
+dropped from 1 to 0 — a deliberate, documented, verified improvement, not a
+regression.** No existing business behavior changed: the CSRF rename and PDO
+guard are pure deprecated-API replacements with identical runtime effect
+(confirmed by the unchanged test count and the live smoke test); the deletions
+removed only code with zero call sites, verified by tooling and manual trace,
+never by guess.
