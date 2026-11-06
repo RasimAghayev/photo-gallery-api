@@ -1,11 +1,12 @@
 includes:
     - vendor/larastan/larastan/extension.neon
-    # Baselines the 9 pre-existing findings this Phase 4 pass deliberately
-    # does not touch: the stubbed, unregistered ImagePolicy (TECHNICAL_DEBT.md
-    # #4 — a separate, already-deferred decision) and Laravel's own generated
-    # User model PHPDoc covariance warning (present in a fresh Laravel 12
-    # install, not an app bug). Regenerate with --generate-baseline only when
-    # one of those two is intentionally addressed.
+    # Baselines Laravel's own generated User model PHPDoc covariance warning
+    # (present in a fresh Laravel 12 install, not an app bug). The other
+    # baselined finding this comment used to describe -- the stubbed,
+    # unregistered ImagePolicy (TECHNICAL_DEBT.md #4) -- was removed in
+    # Phase 7 (dead code); its baseline entries were removed with it.
+    # Regenerate with --generate-baseline only when the User model warning
+    # is intentionally addressed.
     - phpstan-baseline.neon
 
 parameters:
