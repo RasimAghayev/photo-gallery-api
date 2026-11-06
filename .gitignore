@@ -21,3 +21,7 @@ yarn-error.log
 # The state of the stack (R92): the local environment file, the data of the
 # database and the files of the gallery.
 var/
+
+# Scratch dir used by scripts/secret-scan.sh (pre-commit hook); always
+# removed by the script itself on exit, ignored here as a safety net.
+/.git-secret-scan-scratch/
