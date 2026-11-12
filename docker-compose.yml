@@ -32,6 +32,8 @@ services:
       - var/.env
     environment:
       APP_ENV: local
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      LOG_CHANNEL: stderr
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: "3306"
