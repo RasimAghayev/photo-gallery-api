@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             ThrottleRequests::class.':api',
         ]);
+
+        // Configure trusted proxies from TRUSTED_PROXIES when running behind a
+        // reverse proxy; defaults to trusting none.
+        $middleware->trustProxies(at: null);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // The application is an API, so every answer of it is JSON. Without

@@ -146,7 +146,6 @@ class ImageController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Image deleted successfully.',
-            'data' => ['id' => $image->id],
         ]);
     }
 
