@@ -14,6 +14,9 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'mode' => env('APP_MODE', 'standalone'),
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+    'rate_limit_per_minute' => env('RATE_LIMIT_PER_MINUTE', 60),
 
     /*
     |--------------------------------------------------------------------------
