@@ -1,13 +1,13 @@
 ENV_FILE := var/.env
 COMPOSE  := docker compose --env-file $(ENV_FILE)
 
-.PHONY: up down build run test lint audit analyse verify migrate token logs
+.PHONY: up down run build test lint audit analyse verify migrate token logs
 
 up: ## Build and start the stack in the background
 	$(COMPOSE) build
 	$(COMPOSE) up -d
 
-run: ## Start the stack (alias for up)
+run: ## Alias for up (build and start stack)
 	$(MAKE) up
 
 down: ## Stop the stack
@@ -28,7 +28,7 @@ audit: ## Run composer audit against the lockfile
 analyse: ## Run Larastan static analysis
 	$(COMPOSE) --profile test run --rm --entrypoint ./vendor/bin/phpstan test analyse --memory-limit=512M
 
-verify: ## Run the full quality gate (lint, static analysis, audit, tests)
+verify: ## Run full quality gate (lint, analyse, audit, test)
 	$(MAKE) lint
 	$(MAKE) analyse
 	$(MAKE) audit
