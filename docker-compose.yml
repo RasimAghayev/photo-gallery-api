@@ -23,6 +23,9 @@ services:
       context: .
       dockerfile: build/php/Dockerfile
       target: runtime
+    # Pin the tag so the CI image scan can reference it without depending on
+    # the compose project name (which is "abysstask", not the repository name).
+    image: photo-gallery-api-app:latest
     container_name: abysstask_app
     restart: always
     depends_on:
