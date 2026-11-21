@@ -23,7 +23,7 @@ RUN a2enmod rewrite
 
 # The composer of the matching version, so the lock file is installed the way
 # it was resolved.
-COPY --from=composer:2@sha256:ca11f643d7791ebdd90a34fc20caf11380d434007ae539a9ea75cd9212e13dca /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2@sha256:50ea4d33fdcde1adb0f045547295faa1548b33872e5f789dae5b02ce2fb5de93 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
